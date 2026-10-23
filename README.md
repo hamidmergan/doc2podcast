@@ -19,7 +19,7 @@ doc2podcast currently reads:
 - A **text-to-speech model** on the same server or on one of its own
 - `ffmpeg` on the PATH. It joins the voiced contributions into one MP3.
 - `doc2speech`, the sibling tool that sends a single contribution to the speech model.
-  It is not on PyPI yet, see Installation.
+  It is installed along with this tool, see Installation.
 - An API key is optional. Many self-hosted servers do not need one.
 
 If you run your own models, your documents stay on your own network. Nothing leaves
@@ -27,22 +27,31 @@ your machine or data center.
 
 ## Installation
 
-The speaking is done by [doc2speech](https://github.com/hamidmergan/doc2speech), a
-sibling tool from the same set of document tools. It is not on PyPI yet, so `pip` cannot
-find it on any index and neither `pip install doc2podcast` nor a plain `pip install .`
-in the clone can resolve it. Install doc2speech from its source first, then this tool:
+doc2podcast is installed from GitHub:
 
 ```bash
-git clone https://github.com/hamidmergan/doc2speech.git
-pip install ./doc2speech
-
-git clone https://github.com/hamidmergan/doc2podcast.git
-pip install ./doc2podcast
+pip install git+https://github.com/hamidmergan/doc2podcast.git
 ```
 
-The order matters. With doc2speech already installed, the dependency is satisfied and
-the second command needs no index for it. If you keep the two checkouts side by side,
-`pip install -e ../doc2speech` from the doc2podcast folder does the same job.
+With the web UI:
+
+```bash
+pip install "doc2podcast[ui] @ git+https://github.com/hamidmergan/doc2podcast.git"
+```
+
+The speaking is done by [doc2speech](https://github.com/hamidmergan/doc2speech), a
+sibling tool from the same set of document tools. Its repository is named in
+`pyproject.toml`, so the command above brings it in as well and there is no order to
+keep. `git` has to be on your PATH, because pip fetches both repositories with it.
+
+Alternatively, you can install it from a local copy (`pip install ".[ui]"` for the
+web UI):
+
+```bash
+git clone https://github.com/hamidmergan/doc2podcast.git
+cd doc2podcast
+pip install .
+```
 
 ffmpeg comes from your package manager, for example `brew install ffmpeg` or
 `apt install ffmpeg`.
@@ -174,7 +183,7 @@ what the head leaves out is taken from the environment as usual.
 A small page in the browser, with the same fields and steps as the CLI:
 
 ```bash
-pip install "doc2podcast[ui]"
+pip install "doc2podcast[ui] @ git+https://github.com/hamidmergan/doc2podcast.git"
 doc2podcast serve
 ```
 
@@ -225,14 +234,8 @@ The CLI works in the image too:
 docker compose run --rm doc2podcast doc2podcast --help
 ```
 
-Wheels placed in `wheels/` are preferred over the package index while the image is
-built. Today one wheel is needed, because doc2speech is not on the index yet. Build it
-once from your checkout, then the image builds:
-
-```bash
-pip wheel --no-deps -w wheels ../doc2speech
-docker compose build
-```
+The image installs doc2speech from its repository during the build, so it needs network
+access to GitHub. `git` is in the image for that.
 
 ### Settings
 
@@ -327,13 +330,13 @@ subject mentioned twice is not caught.
 ## Running Tests
 
 ```bash
-pip install -e ../doc2speech
 pip install -e ".[test]"
 pytest
 ```
 
-The first line is the same story as in Installation: doc2speech is not on an index yet,
-so point pip at your checkout of it. The path is wherever you cloned it.
+doc2speech comes from its repository, so this needs `git` and network access. To work
+on both tools at once, add `pip install -e ../doc2speech` and your own checkout wins.
+The path is wherever you cloned it.
 
 The tests run against a local fake server and need no real model. Tests that join
 audio are skipped when ffmpeg is missing, so install ffmpeg before you read a green

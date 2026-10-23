@@ -12,18 +12,12 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v7
-      # doc2speech is a sibling tool and not on a package index, so the resolver
-      # cannot find it. It comes from its own repository.
-      - uses: actions/checkout@v7
-        with:
-          repository: hamidmergan/doc2speech
-          path: .doc2speech
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       # Without ffmpeg every test that voices or joins audio skips and the run is
       # still green, which would say nothing about half of the tool.
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - run: pip install ./.doc2speech
+      # doc2speech is a sibling tool and is pulled from its repository by pip.
       - run: pip install -e ".[test]"
       - run: pytest -q

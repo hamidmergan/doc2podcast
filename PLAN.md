@@ -132,16 +132,12 @@ does not take it for an oversight.
 
 ## Open
 
-- `doc2speech` is not on a package index yet, so neither `pip install doc2podcast` nor
-  a plain `pip install .` in the clone can resolve it. Until it is published:
-  - README Installation and Running Tests name it and give the install path
-    (`pip install ./doc2speech` or `pip install -e ../doc2speech`) before this tool.
-  - `pyproject.toml` keeps the normal dependency `doc2speech>=0.1` with a comment
-    saying where it comes from, so publishing it needs no change here.
-  - The CI job checks the doc2speech repository out next to this one and installs it
-    from that source, so the workflow is green rather than left red.
-  - The Dockerfile takes it from `wheels/` through `--find-links`. Drop a wheel in with
-    `pip wheel --no-deps -w wheels ../doc2speech` before building the image.
-    `wheels/*.whl` is git ignored, only `wheels/README.md` is tracked.
+- `doc2speech` is settled: no package index is involved anywhere. `pyproject.toml`
+  names its repository (`doc2speech @ git+https://github.com/hamidmergan/doc2speech.git`),
+  so one install command covers both tools and the order does not matter. README
+  Installation and Running Tests, the CI job and the Dockerfile all rely on that. The
+  Dockerfile carries `git` and needs network access to GitHub while the image is built.
+  The `wheels/` folder and the `--find-links` flag are gone, a direct repository URL
+  cannot be served from a local wheel.
 - The CI job installs ffmpeg. Without it every test that voices or joins audio skips
   and the run still reports green, which would say nothing about half of the tool.

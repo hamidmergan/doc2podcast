@@ -1,15 +1,14 @@
 FROM python:3.12-slim
 
-# ffmpeg joins the voiced contributions into one MP3.
+# ffmpeg joins the voiced contributions into one MP3. git lets pip fetch the sibling
+# tool doc2speech, which is named with its repository in pyproject.toml.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg \
+    && apt-get install -y --no-install-recommends ffmpeg git \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY . .
-# Wheels in ./wheels are preferred over the index, for a dependency that is not
-# on the index yet or for a build without network access to it.
-RUN pip install --no-cache-dir --find-links=/app/wheels ".[ui]" \
+RUN pip install --no-cache-dir ".[ui]" \
     && useradd --create-home --uid 1000 app
 
 USER app
