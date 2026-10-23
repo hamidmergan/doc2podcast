@@ -84,6 +84,20 @@ of all earlier ones. The reason to accept this is that the alternative is the ma
 which is a tool of its own and far larger than this one. The cost is in the README
 under Limitations.
 
+### Two numbers of the window budget differ
+
+- The smallest window accepted is 16384 tokens, half the source value. The source ran
+  against servers it had measured and could insist on 32768. This tool is pointed at
+  whatever a user runs, and a 16k window still carries about 28000 characters per call,
+  which is a usable episode. Below that the run is refused with the flag named.
+- The source gave every file at least two topics, so a file at the back of a long
+  dossier could not fall out of the topic stage. That floor needed the passage map to
+  know which file a topic came from. Here the material is cut into pieces at blank line
+  boundaries and every piece is mapped on its own, so every piece contributes at least
+  one topic, but the share a single file gets is not guaranteed. The topic prompt asks
+  for the file name in the title instead, which is what the plan is then measured
+  against.
+
 ## Known properties
 
 Behaviour that is faithful to the source and kept on purpose, written down so a reader

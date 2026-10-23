@@ -107,10 +107,14 @@ def test_progress_counts_the_contributions(server, conf):
 def test_a_stumbling_provider_is_tried_again(server, conf, monkeypatch):
     from doc2podcast import voicing as module
 
-    monkeypatch.setattr(module.time, "sleep", lambda seconds: None)
+    slept = []
+    monkeypatch.setattr(module.time, "sleep", slept.append)
     server.speech_failures = 1
     audio = render(SCRIPT, **speech_conf(conf))
     assert audio
+    # One request fails, its second attempt works, the other two go out once each.
+    assert len(server.speech_requests) == 4
+    assert slept == [module.RETRY_PAUSES[0]]
 
 
 def test_a_dead_provider_costs_one_ladder_and_no_more(server, conf, monkeypatch):

@@ -18,6 +18,10 @@ def big_material(tmp_path, chars=60_000):
 
 
 def test_the_window_decides_how_much_text_one_call_carries():
+    # The task and the answer take 7,000 tokens of the window, the rest carries
+    # material at three characters a token.
+    assert budget.window_chars(SMALL_WINDOW) == 28_152
+    assert budget.window_chars(131_072) == 372_216
     assert budget.window_chars(131_072) > budget.window_chars(SMALL_WINDOW) > 0
 
 
@@ -26,6 +30,13 @@ def test_a_window_too_small_for_an_episode_is_refused():
         budget.window_chars(4096)
     assert "DOC2PODCAST_CONTEXT_WINDOW" in str(info.value)
     assert str(MIN_WINDOW_TOKENS) in str(info.value)
+
+
+def test_the_smallest_accepted_window_is_sixteen_thousand_tokens():
+    assert MIN_WINDOW_TOKENS == 16_384
+    assert budget.window_chars(MIN_WINDOW_TOKENS) > 0
+    with pytest.raises(ConfigError):
+        budget.window_chars(MIN_WINDOW_TOKENS - 1)
 
 
 def test_material_that_fits_goes_out_unchanged(server, conf, material):
