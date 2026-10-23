@@ -24,3 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Own settings for the speech side, with a fallback to the chat values.
 - `--instructions` for a wish about subject or tone, and `--intro-note` for a spoken
   note that also lands in the metadata of the file.
+- Web page under `doc2podcast serve` with the five steps Content, Cast, Script,
+  Voicing and Done, the script editable line by line, and the MP3, the script and the
+  transcript to download.
+- Dockerfile with ffmpeg and a compose file that starts the page on port 8000.
