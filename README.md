@@ -155,8 +155,19 @@ conversation follows as one line per contribution:
 
 Change the text, add or remove contributions, rename the people, swap the voices.
 `--from-script` reads the file back. A plain `Ana: ...` line works too, so a script
-written by hand needs no head at all. Voices given on the command line beat the ones
-in the file.
+written by hand needs no head at all. A contribution carried on in the next line
+belongs to the one above it, so nothing you wrote goes missing.
+
+A script that names its voices needs none on the call, the head is enough:
+
+```bash
+doc2podcast --from-script paper.md -o paper.mp3 \
+  --base-url http://localhost:11434/v1 --tts-model your-speech-model
+```
+
+Voices given on the command line beat the ones in the file. The same holds for
+language, style and speed: what the head really says wins over the environment, and
+what the head leaves out is taken from the environment as usual.
 
 ### Web UI
 
