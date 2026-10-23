@@ -29,4 +29,11 @@ services:
       DOC2PODCAST_MAX_SOURCES: ${DOC2PODCAST_MAX_SOURCES:-}
       DOC2PODCAST_CONCURRENCY: ${DOC2PODCAST_CONCURRENCY:-}
       DOC2PODCAST_TIMEOUT: ${DOC2PODCAST_TIMEOUT:-}
+      DOC2PODCAST_MAX_RETRIES: ${DOC2PODCAST_MAX_RETRIES:-}
+      # The window of your chat model in tokens. Name it when your model has less
+      # than 131072, otherwise large material is cut off by the server.
+      DOC2PODCAST_CONTEXT_WINDOW: ${DOC2PODCAST_CONTEXT_WINDOW:-}
+      # Characters per speech request, and the seconds the whole voicing may take.
+      DOC2PODCAST_CHUNK_CHARS: ${DOC2PODCAST_CHUNK_CHARS:-}
+      DOC2PODCAST_STAGE_SECONDS: ${DOC2PODCAST_STAGE_SECONDS:-}
     restart: unless-stopped
