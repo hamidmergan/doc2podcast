@@ -18,6 +18,8 @@ doc2podcast currently reads:
   (for example Ollama, vLLM, LM Studio, a university server or a cloud provider)
 - A **text-to-speech model** on the same server or on one of its own
 - `ffmpeg` on the PATH. It joins the voiced contributions into one MP3.
+- `doc2speech`, the sibling tool that sends a single contribution to the speech model.
+  It is not on PyPI yet, see Installation.
 - An API key is optional. Many self-hosted servers do not need one.
 
 If you run your own models, your documents stay on your own network. Nothing leaves
@@ -25,17 +27,22 @@ your machine or data center.
 
 ## Installation
 
-```bash
-pip install doc2podcast
-```
+The speaking is done by [doc2speech](https://github.com/hamidmergan/doc2speech), a
+sibling tool from the same set of document tools. It is not on PyPI yet, so `pip` cannot
+find it on any index and neither `pip install doc2podcast` nor a plain `pip install .`
+in the clone can resolve it. Install doc2speech from its source first, then this tool:
 
-Alternatively, you can install it from the source:
-
 ```bash
+git clone https://github.com/hamidmergan/doc2speech.git
+pip install ./doc2speech
+
 git clone https://github.com/hamidmergan/doc2podcast.git
-cd doc2podcast
-pip install .
+pip install ./doc2podcast
 ```
+
+The order matters. With doc2speech already installed, the dependency is satisfied and
+the second command needs no index for it. If you keep the two checkouts side by side,
+`pip install -e ../doc2speech` from the doc2podcast folder does the same job.
 
 ffmpeg comes from your package manager, for example `brew install ffmpeg` or
 `apt install ffmpeg`.
@@ -208,8 +215,13 @@ docker compose run --rm doc2podcast doc2podcast --help
 ```
 
 Wheels placed in `wheels/` are preferred over the package index while the image is
-built. That helps when a dependency is not on the index yet or the build has no
-network access to it.
+built. Today one wheel is needed, because doc2speech is not on the index yet. Build it
+once from your checkout, then the image builds:
+
+```bash
+pip wheel --no-deps -w wheels ../doc2speech
+docker compose build
+```
 
 ### Settings
 
@@ -268,12 +280,17 @@ so check facts, figures and deadlines before you publish.
 ## Running Tests
 
 ```bash
+pip install -e ../doc2speech
 pip install -e ".[test]"
 pytest
 ```
 
+The first line is the same story as in Installation: doc2speech is not on an index yet,
+so point pip at your checkout of it. The path is wherever you cloned it.
+
 The tests run against a local fake server and need no real model. Tests that join
-audio are skipped when ffmpeg is missing.
+audio are skipped when ffmpeg is missing, so install ffmpeg before you read a green
+run as proof that the voicing works.
 
 ## License
 

@@ -30,6 +30,8 @@ classifiers = [
 ]
 dependencies = [
     "openai>=1.30",
+    # doc2speech is a sibling tool and not on a package index yet, so pip cannot fetch
+    # it. Install it from its own source first, see Installation in the README.
     "doc2speech>=0.1",
     "pydantic>=2.0",
     "pypdfium2>=4.30",
