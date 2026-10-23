@@ -209,3 +209,26 @@ def test_a_foreign_origin_is_refused(client):
 def test_the_own_origin_is_allowed(client):
     answer = client.get("/api/info", headers={"Origin": "http://testserver"})
     assert answer.status_code == 200
+
+
+@needs_ffmpeg
+def test_a_second_voicing_does_not_serve_the_episode_before_it(client, server):
+    payload = {
+        "lines": [{"speaker": 0, "text": "Hello and welcome."}],
+        "persons": [{"name": "Ana", "role": "host", "voice": "alloy"}],
+        "language": "en",
+        "speed": 1.0,
+    }
+    assert client.post("/api/render", json=payload).status_code == 200
+    assert wait(client)["has_audio"]
+    assert client.get("/api/audio").status_code == 200
+
+    server.speech_delay = 0.4
+    payload["lines"] = [{"speaker": 0, "text": "A second episode."}]
+    assert client.post("/api/render", json=payload).status_code == 200
+    running = client.get("/api/job").json()
+    assert running["state"] == "running" and not running["has_audio"]
+    assert client.get("/api/audio").status_code == 404
+    assert wait(client)["has_audio"]
+    assert client.get("/api/audio").status_code == 200
+    assert "A second episode." in client.get("/api/transcript").text
