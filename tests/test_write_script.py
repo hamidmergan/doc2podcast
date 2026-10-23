@@ -117,3 +117,53 @@ def test_progress_counts_the_parts(server, conf, material):
     write_script([material], minutes=20, progress=lambda done, total: seen.append((done, total)),
                  **conf)
     assert seen[0] == (0, 4) and seen[-1] == (4, 4)
+
+
+def two_files(tmp_path):
+    """One file that holds most of the material and one small one."""
+    big = tmp_path / "rules.md"
+    big.write_text("# Rules\n\n" + "A tenant may ask for the heating bill. " * 300,
+                   encoding="utf-8")
+    small = tmp_path / "notes.md"
+    small.write_text("# Notes\n\nThe office is open on Monday.\n", encoding="utf-8")
+    return [big, small]
+
+
+def test_a_plan_that_gives_a_big_file_no_room_is_asked_again(server, conf, tmp_path):
+    server.plan_files = [[["notes.md"]], [["rules.md"], ["notes.md"]]]
+    write_script(two_files(tmp_path), minutes=5, **conf)
+    assert len(server.plan_requests) == 2
+    second = str(server.plan_requests[1]["body"]["messages"])
+    assert "FAR TOO LITTLE ROOM" in second
+    assert "rules.md (100 % of the material)" in second
+
+
+def test_a_plan_that_covers_every_file_is_asked_once(server, conf, tmp_path):
+    server.plan_files = [[["rules.md"], ["notes.md"]]]
+    write_script(two_files(tmp_path), minutes=5, **conf)
+    assert len(server.plan_requests) == 1
+
+
+def test_a_plan_is_asked_twice_at_most(server, conf, tmp_path):
+    server.plan_files = [[["notes.md"]], [["notes.md"]]]
+    write_script(two_files(tmp_path), minutes=5, **conf)
+    assert len(server.plan_requests) == 2
+
+
+def test_one_file_alone_is_never_measured_against_the_plan(server, conf, material):
+    server.plan_files = [[[]]]
+    write_script([material], minutes=5, **conf)
+    assert len(server.plan_requests) == 1
+
+
+def test_a_file_named_by_a_part_counts_as_covered(tmp_path):
+    from doc2podcast.generate import too_light
+
+    plan = [{"title": "One", "files": ["rules.md"]}, {"title": "Two", "files": ["notes.md"]}]
+    assert too_light(plan, {"rules.md": 0.9, "notes.md": 0.1}) == []
+    thin = [{"title": "One", "files": ["notes.md"]}]
+    assert too_light(thin, {"rules.md": 0.9, "notes.md": 0.1}) == [("rules.md", 90)]
+    # A file under a twentieth of the material is spared, and a plan that names no
+    # file at all says nothing about its weight.
+    assert too_light(thin, {"notes.md": 0.97, "tiny.md": 0.03}) == []
+    assert too_light([{"title": "One", "files": []}], {"rules.md": 1.0}) == []

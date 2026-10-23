@@ -16,6 +16,7 @@ needs_ffmpeg = pytest.mark.skipif(not HAS_FFMPEG, reason="ffmpeg is not installe
 # How many contributions a part was asked for, in both languages of the prompt.
 _COUNT = re.compile(r"(?:exactly (\d+) contributions|genau (\d+) Beiträge)")
 _PARTS = re.compile(r"exactly (\d+) consecutive parts")
+_TOPICS = re.compile(r"at most (\d+), spread over the whole text")
 
 
 def _mp3(seconds=0.3) -> bytes:
@@ -36,13 +37,25 @@ def _mp3(seconds=0.3) -> bytes:
 MP3 = _mp3()
 
 
-def plan_answer(parts: int) -> str:
+def plan_answer(parts: int, files=None) -> str:
+    """A plan with as many parts as asked for, each naming the files it draws on."""
+    out = []
+    for i in range(parts):
+        part = {"title": "Part %d" % (i + 1), "gist": "What part %d covers." % (i + 1)}
+        if files is not None:
+            part["files"] = list(files[i]) if i < len(files) else []
+        out.append(part)
     return json.dumps({
         "opening": "Lea stands in front of the notice board and wonders what to do.",
         "thread": "One rule, many everyday questions.",
-        "parts": [{"title": "Part %d" % (i + 1), "gist": "What part %d covers." % (i + 1)}
-                  for i in range(parts)],
+        "parts": out,
     })
+
+
+def topics_answer(most: int) -> str:
+    return json.dumps({"topics": [{"title": "Topic %d" % (i + 1),
+                                   "gist": "What topic %d states." % (i + 1)}
+                                  for i in range(most)]})
 
 
 def lines_answer(count: int, persons: int = 2) -> str:
@@ -66,6 +79,8 @@ class FakeServer:
         self.speech_status = 500
         self.speech_delay = 0.0
         self.persons = 2
+        # One entry per planning call: the files each part of that plan names.
+        self.plan_files = []
         self.lock = threading.Lock()
         outer = self
 
@@ -133,9 +148,14 @@ class FakeServer:
                        if m.get("role") == "user")
         if "instruction for" in system:
             return '{"way": "manner"}'
+        if "You map a text" in system:
+            found = _TOPICS.search(system)
+            return topics_answer(int(found.group(1)) if found else 1)
         if "You plan a podcast episode" in system:
             found = _PARTS.search(system)
-            return plan_answer(int(found.group(1)) if found else 1)
+            with self.lock:
+                files = self.plan_files.pop(0) if self.plan_files else None
+            return plan_answer(int(found.group(1)) if found else 1, files)
         found = _COUNT.search(user)
         count = int(found.group(1) or found.group(2)) if found else 4
         return lines_answer(count, self.persons)
@@ -143,6 +163,16 @@ class FakeServer:
     @property
     def base_url(self):
         return "http://127.0.0.1:%d/v1" % self.httpd.server_port
+
+    @property
+    def plan_requests(self):
+        return [r for r in self.chat_requests
+                if "You plan a podcast episode" in str(r["body"].get("messages"))]
+
+    @property
+    def topic_requests(self):
+        return [r for r in self.chat_requests
+                if "You map a text" in str(r["body"].get("messages"))]
 
     @property
     def chat_requests(self):

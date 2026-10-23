@@ -319,8 +319,8 @@ def material(sources: Sequence[Source], max_chars: int = 0) -> str:
         raise EmptyTextError("No material to work with.")
     budget = _budget(sources, max_chars)
     blocks: List[str] = []
-    for source in sources:
-        text = source.text[: budget[source.name]] if budget else source.text
+    for index, source in enumerate(sources):
+        text = source.text[: budget[index]] if budget else source.text
         for number, start, end in source.bounds or ((1, 0, len(text)),):
             piece = text[start:end].strip()
             if not piece:
@@ -331,10 +331,32 @@ def material(sources: Sequence[Source], max_chars: int = 0) -> str:
     return "\n\n".join(blocks)
 
 
-def _budget(sources: Sequence[Source], max_chars: int) -> Dict[str, int]:
-    """How many characters each source may contribute, empty when everything fits."""
+def _budget(sources: Sequence[Source], max_chars: int) -> List[int]:
+    """How many characters each source may contribute, empty when everything fits.
+
+    Counted by position, not by name: two files called ``notes.md`` in different
+    folders are two sources with two budgets.
+    """
     total = sum(len(s.text) for s in sources)
     if not max_chars or total <= max_chars:
-        return {}
+        return []
     share = max_chars / float(total)
-    return {s.name: max(1, int(len(s.text) * share)) for s in sources}
+    return [max(1, int(len(s.text) * share)) for s in sources]
+
+
+def shares(sources: Sequence[Source], max_chars: int = 0) -> Dict[str, float]:
+    """How much of the material each file holds, from 0 to 1, by characters.
+
+    This is what a plan is measured against: a file that holds half the material and
+    turns up in no part of the plan is a plan that has to be asked for again.
+    """
+    budget = _budget(sources, max_chars)
+    sizes = [min(len(s.text), budget[i]) if budget else len(s.text)
+             for i, s in enumerate(sources)]
+    total = float(sum(sizes))
+    if not total:
+        return {}
+    out: Dict[str, float] = {}
+    for source, size in zip(sources, sizes):
+        out[source.name] = out.get(source.name, 0.0) + size / total
+    return out

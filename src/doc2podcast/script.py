@@ -327,8 +327,13 @@ def build_messages(source: str, params: PodcastParams, *, count: Optional[int] =
 
 
 def plan_messages(material: str, params: PodcastParams, parts: int,
-                  files: Optional[List[str]] = None) -> List[dict]:
-    """The episode laid out in parts, each with its own subject."""
+                  files: Optional[List[str]] = None,
+                  missing: Optional[List[str]] = None) -> List[dict]:
+    """The episode laid out in parts, each with its own subject.
+
+    ``missing`` names the files the last plan gave far too little room, so the next
+    plan can give them the share of the episode their weight in the material asks for.
+    """
     language = "German" if params.language == "de" else "English"
     # An instruction with a subject of its own decides what the episode is about, not the files.
     if instructions.focus(params.instructions, params.instruction_way):
@@ -344,7 +349,10 @@ def plan_messages(material: str, params: PodcastParams, parts: int,
         + (f"The material comes from {len(files)} files: {', '.join(files)}. EVERY one of "
            "them is talked about in the episode.\n" if files and len(files) > 1 else "")
         + 'Answer with one JSON object only: {"opening": "...", "thread": "...", "parts": '
-        '[{"title": "...", "gist": "..."}]}. The opening is a '
+        + ('[{"title": "...", "gist": "...", "files": ["..."]}]}. Under "files" name the '
+           "documents that part draws on, by the file names above. "
+           if files and len(files) > 1 else '[{"title": "...", "gist": "..."}]}. ')
+        + 'The opening is a '
         "small story: one person in one concrete situation from the listeners' own life that "
         "the material decides, ending in a question the episode answers, in two or three "
         "sentences, ideally touching several of the documents, never a list of problems. The thread is one "
@@ -354,6 +362,10 @@ def plan_messages(material: str, params: PodcastParams, parts: int,
     )
     task = f"/no_think\nMATERIAL:\n{material}\n"
     task += instructions.plan_addition(params.instructions, params.instruction_way, "part")
+    if missing:
+        task += ("\nYOUR LAST PLAN GAVE THESE FILES FAR TOO LITTLE ROOM. Give each a "
+                 "share of the episode that matches how much of the material it holds, "
+                 "with parts about it by title: " + ", ".join(missing))
     return [{"role": "system", "content": system}, {"role": "user", "content": task}]
 
 
@@ -361,11 +373,27 @@ def plan_messages(material: str, params: PodcastParams, parts: int,
 _REFS_IN_TEXT = re.compile(r"\s*\brefs?\s*:.*$", re.IGNORECASE)
 
 
-def parse_plan(raw: str, parts: int) -> List[dict]:
+def _named_files(raw, files: Optional[List[str]]) -> List[str]:
+    """The documents a part says it draws on, invented and doubled names dropped."""
+    if not files or not isinstance(raw, list):
+        return []
+    known = {name.lower(): name for name in files}
+    out: List[str] = []
+    for value in raw:
+        if not isinstance(value, str):
+            continue
+        name = known.get(value.strip().lower())
+        if name and name not in out:
+            out.append(name)
+    return out
+
+
+def parse_plan(raw: str, parts: int, files: Optional[List[str]] = None) -> List[dict]:
     """The parts out of the planning answer.
 
     Too many parts are folded into the last one, too few stay as they are: the episode
-    is then written in fewer calls, each still small enough.
+    is then written in fewer calls, each still small enough. With ``files`` every part
+    also keeps the documents it says it draws on, invented names drop out.
     """
     text = (raw or "").strip()
     start, end = text.find("{"), text.rfind("}")
@@ -384,11 +412,14 @@ def parse_plan(raw: str, parts: int) -> List[dict]:
         if not title:
             continue
         gist = _REFS_IN_TEXT.sub("", " ".join(str(entry.get("gist") or "").split()))
-        out.append({"title": title, "gist": gist.strip()[:300]})
+        out.append({"title": title, "gist": gist.strip()[:300],
+                    "files": _named_files(entry.get("files"), files)})
     if not out:
         raise ScriptUnusable("the plan holds no part")
     while len(out) > parts:
-        out.pop()
+        last = out.pop()
+        out[-1]["files"] = out[-1]["files"] + [f for f in last["files"]
+                                               if f not in out[-1]["files"]]
     for part in out:
         part["opening"] = part["thread"] = ""
     out[0]["opening"] = " ".join(str(data.get("opening") or "").split())[:400]

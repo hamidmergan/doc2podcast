@@ -94,7 +94,9 @@ def write_script(
     params = params_from(resolved, source_label=", ".join(s.name for s in read))
     ask = Ask(client or make_client(resolved), resolved)
     lines = generate.write_lines(ask, material, params,
-                                 files=[s.name for s in read], progress=progress)
+                                 files=[s.name for s in read],
+                                 shares=sources.shares(read, resolved.max_chars),
+                                 progress=progress)
     logger.info("Podcast: script with %d contributions", len(lines))
     return markdown.to_markdown(lines, params)
 
@@ -174,7 +176,9 @@ def make_podcast(
     params = params_from(resolved, source_label=", ".join(s.name for s in read))
     ask = Ask(client or make_client(resolved), resolved)
     lines = generate.write_lines(ask, material, params,
-                                 files=[s.name for s in read], progress=script_progress)
+                                 files=[s.name for s in read],
+                                 shares=sources.shares(read, resolved.max_chars),
+                                 progress=script_progress)
     speech = speech_client or make_speech_client(resolved)
     audio, seconds = render_lines(speech, resolved, lines, params, progress)
     logger.info("Podcast: done, %.0fs from %d contributions", seconds, len(lines))

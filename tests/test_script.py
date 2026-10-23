@@ -103,7 +103,43 @@ def test_parse_plan_reads_title_gist_opening_and_thread():
 
 def test_parse_plan_folds_too_many_parts():
     raw = json.dumps({"parts": [{"title": str(i), "gist": "g"} for i in range(5)]})
-    assert len(script.parse_plan(raw, 2)) == 2
+    plan = script.parse_plan(raw, 2)
+    # The first parts stay, the surplus ones are dropped from the back.
+    assert [p["title"] for p in plan] == ["0", "1"]
+
+
+def test_a_folded_part_leaves_its_files_with_the_one_before_it():
+    raw = json.dumps({"parts": [
+        {"title": "One", "gist": "g", "files": ["a.pdf"]},
+        {"title": "Two", "gist": "g", "files": ["b.pdf"]},
+        {"title": "Three", "gist": "g", "files": ["c.pdf", "a.pdf"]},
+    ]})
+    plan = script.parse_plan(raw, 2, ["a.pdf", "b.pdf", "c.pdf"])
+    assert [p["title"] for p in plan] == ["One", "Two"]
+    assert plan[1]["files"] == ["b.pdf", "c.pdf", "a.pdf"]
+
+
+def test_a_plan_keeps_only_the_files_that_exist():
+    raw = json.dumps({"parts": [{"title": "One", "gist": "g",
+                                 "files": ["A.pdf", "made-up.pdf", "a.pdf", 7]}]})
+    plan = script.parse_plan(raw, 1, ["a.pdf", "b.pdf"])
+    assert plan[0]["files"] == ["a.pdf"]
+
+
+def test_the_plan_prompt_asks_for_the_files_of_a_part():
+    params = PodcastParams(persons=[Person(name="Ana")])
+    system = script.plan_messages("M", params, 2, ["a.pdf", "b.pdf"])[0]["content"]
+    assert '"files": ["..."]' in system
+    one = script.plan_messages("M", params, 2, ["a.pdf"])[0]["content"]
+    assert "files" not in one
+
+
+def test_a_second_plan_names_the_files_that_got_too_little_room():
+    params = PodcastParams(persons=[Person(name="Ana")])
+    task = script.plan_messages("M", params, 2, ["a.pdf", "b.pdf"],
+                                ["b.pdf (70 % of the material)"])[1]["content"]
+    assert "FAR TOO LITTLE ROOM" in task
+    assert "b.pdf (70 % of the material)" in task
 
 
 def test_parse_plan_refuses_a_plan_without_parts():

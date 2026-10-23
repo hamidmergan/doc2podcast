@@ -251,6 +251,7 @@ def create_app(settings: Optional[Settings] = None,
                 ask = Ask(client or make_client(chosen), chosen)
                 lines = generate.write_lines(
                     ask, material, params, files=[s.name for s in read],
+                    shares=sources.shares(read, chosen.max_chars),
                     progress=lambda done, total: _report(done, total))
             except Exception as exc:
                 return failed(exc)
