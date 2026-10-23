@@ -40,10 +40,10 @@ Markdown for review, `--from-script` voices a reviewed script.
 - [x] 1 Core: script generation, Markdown script format, voicing, joining, config, errors
 - [x] 2 API and CLI
 - [x] 3 Tests with a fake chat and speech server
-- [ ] 4 README, CHANGELOG 0.1.0, local smoke test
+- [x] 4 README, CHANGELOG 0.1.0, local smoke test
 - [ ] 5 English sweep and acceptance
 - [ ] 6 Web UI and Docker
 
 ## Open
 
-- Steps 4 to 6 are open.
+- Steps 5 and 6 are open.
