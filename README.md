@@ -151,6 +151,66 @@ Change the text, add or remove contributions, rename the people, swap the voices
 written by hand needs no head at all. Voices given on the command line beat the ones
 in the file.
 
+### Web UI
+
+A small page in the browser, with the same fields and steps as the CLI:
+
+```bash
+pip install "doc2podcast[ui]"
+doc2podcast serve
+```
+
+Then open http://127.0.0.1:8000. The page walks through five steps: Content, Cast,
+Script, Voicing, Done. Drop your documents, pick the language and an optional
+instruction, pick how many people speak and give each a name, a role and a voice,
+let the script be written, read it and change it line by line, then have it voiced.
+The finished episode plays on the page, the MP3, the script and the transcript can be
+downloaded.
+
+Base URL, models, key and voices come from the environment and can be changed in the
+fields of the page. Empty fields keep the value the server was started with.
+
+The page has no login. It listens on 127.0.0.1 by default, so only your own machine
+can reach it. Use `--host 0.0.0.0` only in a network you trust, for example inside
+Docker behind your own reverse proxy.
+
+```bash
+doc2podcast serve --host 0.0.0.0 --port 8000 --voices alloy,echo
+```
+
+### Docker
+
+The image brings ffmpeg and starts the web page:
+
+```bash
+docker compose up
+```
+
+The page is then on http://127.0.0.1:8000. Settings come from `DOC2PODCAST_*`
+environment variables, `docker-compose.yml` lists them all:
+
+```bash
+DOC2PODCAST_BASE_URL=http://host.docker.internal:11434/v1 \
+DOC2PODCAST_MODEL=your-chat-model \
+DOC2PODCAST_TTS_MODEL=your-speech-model \
+DOC2PODCAST_VOICES=alloy,echo \
+docker compose up
+```
+
+A server running on your own machine is reachable from inside the container as
+`host.docker.internal`, not as `localhost`. If port 8000 is taken, set
+`DOC2PODCAST_PORT`.
+
+The CLI works in the image too:
+
+```bash
+docker compose run --rm doc2podcast doc2podcast --help
+```
+
+Wheels placed in `wheels/` are preferred over the package index while the image is
+built. That helps when a dependency is not on the index yet or the build has no
+network access to it.
+
 ### Settings
 
 Order: argument, then environment variable, then default.

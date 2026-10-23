@@ -1,0 +1,32 @@
+services:
+  doc2podcast:
+    build: .
+    ports:
+      # Set DOC2PODCAST_PORT if 8000 is already taken on your machine.
+      - "${DOC2PODCAST_PORT:-8000}:8000"
+    environment:
+      # URL of your OpenAI-compatible server. From inside the container, a server
+      # on the host is reachable as host.docker.internal, not as localhost.
+      DOC2PODCAST_BASE_URL: ${DOC2PODCAST_BASE_URL:-}
+      DOC2PODCAST_MODEL: ${DOC2PODCAST_MODEL:-}
+      # Optional, many self-hosted servers need no key.
+      DOC2PODCAST_API_KEY: ${DOC2PODCAST_API_KEY:-}
+      # The speech side. Without its own values it runs on the chat server.
+      DOC2PODCAST_TTS_BASE_URL: ${DOC2PODCAST_TTS_BASE_URL:-}
+      DOC2PODCAST_TTS_MODEL: ${DOC2PODCAST_TTS_MODEL:-}
+      DOC2PODCAST_TTS_API_KEY: ${DOC2PODCAST_TTS_API_KEY:-}
+      # Optional defaults of the page.
+      DOC2PODCAST_VOICES: ${DOC2PODCAST_VOICES:-}
+      DOC2PODCAST_NAMES: ${DOC2PODCAST_NAMES:-}
+      DOC2PODCAST_ROLES: ${DOC2PODCAST_ROLES:-}
+      DOC2PODCAST_SPEAKERS: ${DOC2PODCAST_SPEAKERS:-}
+      DOC2PODCAST_MINUTES: ${DOC2PODCAST_MINUTES:-}
+      DOC2PODCAST_LANGUAGE: ${DOC2PODCAST_LANGUAGE:-}
+      DOC2PODCAST_STYLE: ${DOC2PODCAST_STYLE:-}
+      DOC2PODCAST_SPEED: ${DOC2PODCAST_SPEED:-}
+      DOC2PODCAST_INTRO_NOTE: ${DOC2PODCAST_INTRO_NOTE:-}
+      DOC2PODCAST_MAX_CHARS: ${DOC2PODCAST_MAX_CHARS:-}
+      DOC2PODCAST_MAX_SOURCES: ${DOC2PODCAST_MAX_SOURCES:-}
+      DOC2PODCAST_CONCURRENCY: ${DOC2PODCAST_CONCURRENCY:-}
+      DOC2PODCAST_TIMEOUT: ${DOC2PODCAST_TIMEOUT:-}
+    restart: unless-stopped

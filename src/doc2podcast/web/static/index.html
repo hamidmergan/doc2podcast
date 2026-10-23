@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>doc2podcast</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>Podcast</h1>
+    <span class="muted">Your material becomes a conversation to listen to. You pick the content and the cast, check the script and have it voiced.</span>
+  </header>
+
+  <nav class="stepper" id="stepper" aria-label="Steps">
+    <span class="step" data-step="content">Content</span>
+    <span class="step" data-step="cast">Cast</span>
+    <span class="step" data-step="script">Script</span>
+    <span class="step" data-step="voicing">Voicing</span>
+    <span class="step" data-step="done">Done</span>
+  </nav>
+
+  <main>
+    <section class="card" id="pane-content">
+      <h2>What is it about?</h2>
+      <label id="drop" class="drop">
+        <input type="file" id="files" multiple hidden>
+        <strong>Drop files here or browse</strong>
+        <span id="extensions" class="muted"></span>
+      </label>
+      <ul id="file-list" class="files"></ul>
+      <p id="file-count" class="muted"></p>
+      <div class="options">
+        <label>Podcast language
+          <select id="language"></select>
+        </label>
+      </div>
+      <label class="block" for="instructions">Instruction, optional</label>
+      <textarea id="instructions" rows="3"
+                placeholder="Narrow down a topic or chapter, set tone and level, name the audience."></textarea>
+      <div class="row">
+        <button id="to-cast" class="primary">Continue to the cast</button>
+      </div>
+      <p class="error" id="content-error" hidden></p>
+    </section>
+
+    <section class="card" id="pane-cast" hidden>
+      <h2>Who speaks?</h2>
+      <div class="options">
+        <label>Number of people
+          <select id="speakers">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </label>
+        <span id="count-hint" class="muted"></span>
+      </div>
+      <div id="persons" class="persons"></div>
+      <div class="options">
+        <label>Length
+          <select id="length">
+            <option value="5">Short, about 5 minutes</option>
+            <option value="10" selected>Medium, about 10 minutes</option>
+            <option value="20">Long, about 20 minutes</option>
+          </select>
+        </label>
+        <label>Style
+          <select id="style">
+            <option value="teaching">Explanatory</option>
+            <option value="casual">Casual</option>
+            <option value="interview">Interview</option>
+          </select>
+        </label>
+        <label class="wide" id="speed-label">Speed
+          <input type="range" id="speed" min="0.7" max="1.2" step="0.05" value="0.9">
+        </label>
+      </div>
+      <p class="muted">Slow (0.7x) to fast (1.2x). A different tempo voices every contribution again.</p>
+      <div class="row">
+        <button id="back-content">Back</button>
+        <button id="to-script" class="primary">Write the script</button>
+      </div>
+      <p class="error" id="cast-error" hidden></p>
+    </section>
+
+    <section class="card" id="pane-script" hidden>
+      <h2 id="script-heading">The script is being written</h2>
+      <p id="script-progress" class="muted"></p>
+      <p id="script-intro" class="muted" hidden>Every line can be edited, rephrased or deleted. Voicing starts only when you are happy with it.</p>
+      <p id="script-unmatched" class="notice" hidden>Your instruction is not covered by the sources. The episode uses all of the material instead.</p>
+      <p id="script-summary" class="muted"></p>
+      <div id="lines" class="lines"></div>
+      <div class="row" id="script-actions" hidden>
+        <button id="add-line">Add a line</button>
+        <a id="download-script" class="button" href="/api/script.md" download>Download script</a>
+        <button id="back-cast">Back</button>
+        <button id="to-voicing" class="primary">Voice it</button>
+      </div>
+      <p class="error" id="script-error" hidden></p>
+    </section>
+
+    <section class="card" id="pane-voicing" hidden>
+      <h2>Voicing</h2>
+      <p id="voicing-progress" class="muted"></p>
+      <p class="error" id="voicing-error" hidden></p>
+      <div class="row" id="voicing-actions" hidden>
+        <button id="back-script">Back to the script</button>
+      </div>
+    </section>
+
+    <section class="card" id="pane-done" hidden>
+      <h2>Your podcast is ready</h2>
+      <p id="done-summary" class="muted"></p>
+      <audio id="audio" controls>Your browser cannot play this file.</audio>
+      <div class="row">
+        <a id="download-audio" class="button primary" href="/api/audio" download>Download MP3</a>
+        <a id="download-transcript" class="button" href="/api/transcript" download>Download transcript</a>
+        <button id="edit-script">Edit the script</button>
+        <button id="restart">New podcast</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Server</h2>
+      <p class="muted">Settings come from the environment. Fields left empty keep the value the server was started with.</p>
+      <div class="options">
+        <label class="wide">Base URL
+          <input type="text" id="base-url" placeholder="http://localhost:11434/v1">
+        </label>
+        <label class="wide">Chat model
+          <input type="text" id="model" placeholder="your-chat-model">
+        </label>
+        <label class="wide">API key
+          <input type="password" id="api-key" placeholder="only if the server needs one">
+        </label>
+        <label class="wide">Speech base URL
+          <input type="text" id="tts-base-url" placeholder="same as the chat server">
+        </label>
+        <label class="wide">Speech model
+          <input type="text" id="tts-model" placeholder="your-speech-model">
+        </label>
+        <label class="wide">Speech API key
+          <input type="password" id="tts-api-key" placeholder="same as the chat key">
+        </label>
+        <label class="wide">Spoken note at the start, optional
+          <input type="text" id="intro-note" placeholder="opens the episode and goes into the metadata">
+        </label>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -3,6 +3,8 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
+from doc2speech import SpeechError
+
 from . import __version__
 from .config import resolve
 from .core import make_podcast, render, write_script
@@ -205,7 +207,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     except ConfigError as exc:
         print("Error: %s" % exc, file=sys.stderr)
         return 2
-    except PodcastError as exc:
+    except (PodcastError, SpeechError) as exc:
         print("Error: %s" % exc, file=sys.stderr)
         return 1
     except OSError as exc:

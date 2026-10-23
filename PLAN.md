@@ -42,8 +42,10 @@ Markdown for review, `--from-script` voices a reviewed script.
 - [x] 3 Tests with a fake chat and speech server
 - [x] 4 README, CHANGELOG 0.1.0, local smoke test
 - [x] 5 English sweep and acceptance
-- [ ] 6 Web UI and Docker
+- [x] 6 Web UI and Docker
 
 ## Open
 
-- Step 6 is open.
+- `doc2speech` is not on a package index yet, so `pip install doc2podcast` and the CI
+  job cannot resolve it. Until it is published, install it from its own checkout and
+  drop its wheel into `wheels/` before building the image.
