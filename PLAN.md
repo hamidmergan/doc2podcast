@@ -41,9 +41,9 @@ Markdown for review, `--from-script` voices a reviewed script.
 - [x] 2 API and CLI
 - [x] 3 Tests with a fake chat and speech server
 - [x] 4 README, CHANGELOG 0.1.0, local smoke test
-- [ ] 5 English sweep and acceptance
+- [x] 5 English sweep and acceptance
 - [ ] 6 Web UI and Docker
 
 ## Open
 
-- Steps 5 and 6 are open.
+- Step 6 is open.
