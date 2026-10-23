@@ -8,8 +8,8 @@ from . import config, generate, markdown, sources
 from .client import Ask, make_client, make_speech_client
 from .config import Settings
 from .errors import EmptyTextError, LimitError
-from .render import render_lines
 from .schemas import DEFAULT_NAMES, DEFAULT_ROLES, Line, Person, PodcastParams
+from .voicing import render_lines
 
 logger = logging.getLogger(__name__)
 
