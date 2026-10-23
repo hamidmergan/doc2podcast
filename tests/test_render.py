@@ -57,6 +57,22 @@ def test_every_contribution_is_spoken_once_with_its_own_voice(server, conf):
 
 
 @needs_ffmpeg
+def test_a_script_that_names_its_voices_needs_none_on_the_call(server, conf):
+    options = {k: v for k, v in speech_conf(conf).items() if k != "voices"}
+    render(SCRIPT, **options)
+    assert [r["body"]["voice"] for r in server.speech_requests] == ["alloy", "echo", "alloy"]
+
+
+def test_a_script_without_voices_anywhere_says_so(server, conf):
+    bare = SCRIPT.replace(" (host, voice alloy)", " (host)").replace(" (expert, voice echo)",
+                                                                     " (expert)")
+    options = {k: v for k, v in speech_conf(conf).items() if k != "voices"}
+    with pytest.raises(ConfigError) as info:
+        render(bare, **options)
+    assert "2 voices" in str(info.value)
+
+
+@needs_ffmpeg
 def test_the_voices_of_the_call_beat_those_in_the_script(server, conf):
     render(SCRIPT, **dict(speech_conf(conf), voices="nova,fable"))
     assert [r["body"]["voice"] for r in server.speech_requests] == ["nova", "fable", "nova"]
@@ -108,9 +124,10 @@ def test_a_script_without_a_speech_model_says_so():
 
 
 def test_a_script_with_too_few_voices_says_so(server, conf):
+    bare = SCRIPT.replace(", voice alloy", "").replace(", voice echo", "")
     with pytest.raises(ConfigError) as info:
-        render(SCRIPT, **dict(speech_conf(conf), voices="alloy"))
-    assert "2 voices" in str(info.value)
+        render(bare, **dict(speech_conf(conf), voices="alloy"))
+    assert "2 voices (--voices or DOC2PODCAST_VOICES), 1 given" in str(info.value)
 
 
 @needs_ffmpeg

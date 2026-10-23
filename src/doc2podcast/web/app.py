@@ -311,7 +311,7 @@ def create_app(settings: Optional[Settings] = None,
         )
         persons = _persons(request, chosen)
         try:
-            config.require_tts(chosen, len(persons))
+            config.require_tts(chosen, len(persons), [p.voice_id for p in persons])
         except ConfigError as exc:
             raise HTTPException(400, str(exc))
         if max(l.speaker for l in lines) >= len(persons):

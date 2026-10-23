@@ -78,6 +78,22 @@ def test_from_script_voices_a_reviewed_script(server, conf, tmp_path):
     assert [r["body"]["voice"] for r in server.speech_requests] == ["alloy", "echo"]
 
 
+@needs_ffmpeg
+def test_the_round_trip_keeps_the_voices_of_the_script(server, conf, material, tmp_path):
+    """Write the script, read it, voice it: the second call names no voice at all."""
+    script = tmp_path / "paper.md"
+    assert main([str(material), "--script-only", "-o", str(script), "--minutes", "5"]
+                + flags(conf)) == 0
+    assert "voice alloy" in script.read_text(encoding="utf-8")
+    episode = tmp_path / "paper.mp3"
+    assert main(["--from-script", str(script), "-o", str(episode),
+                 "--base-url", conf["base_url"], "--tts-model", conf["tts_model"],
+                 "--concurrency", "1", "--quiet"]) == 0
+    assert episode.stat().st_size > 0
+    voices = [r["body"]["voice"] for r in server.speech_requests]
+    assert set(voices) == {"alloy", "echo"} and voices[0] == "alloy"
+
+
 def test_a_missing_setting_ends_with_code_two(material, capsys):
     assert main([str(material), "--script-only", "-o", "-"]) == 2
     assert "DOC2PODCAST_BASE_URL" in capsys.readouterr().err

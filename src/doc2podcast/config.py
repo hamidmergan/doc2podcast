@@ -6,7 +6,7 @@ variables and falls back to the chat values where it has none of its own.
 
 import os
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 from .errors import ConfigError
 from .limits import MAX_CHARS, MAX_SOURCES, TTS_PARALLELISM
@@ -204,17 +204,22 @@ def require_chat(s: Settings) -> None:
         )
 
 
-def require_tts(s: Settings, speakers: int) -> None:
-    """The speech model voices the script, and every speaker needs a voice of their own."""
+def require_tts(s: Settings, speakers: int, voices: Optional[Sequence[str]] = None) -> None:
+    """The speech model voices the script, and every speaker needs a voice of their own.
+
+    ``voices`` are the voices of the cast that really speaks. A script read back from
+    Markdown carries the voices in its head, so the settings may well name none.
+    """
+    chosen = tuple(v for v in (s.voices if voices is None else voices) if v)
     missing: List[str] = []
     if not s.tts_base_url:
         missing.append("tts_base_url (--tts-base-url or DOC2PODCAST_TTS_BASE_URL)")
     if not s.tts_model:
         missing.append("tts_model (--tts-model or DOC2PODCAST_TTS_MODEL)")
-    if len(s.voices) < speakers:
+    if len(chosen) < speakers:
         missing.append(
             f"{speakers} voices (--voices or DOC2PODCAST_VOICES), "
-            f"{len(s.voices)} given"
+            f"{len(chosen)} given"
         )
     if missing:
         raise ConfigError(
@@ -222,5 +227,5 @@ def require_tts(s: Settings, speakers: int) -> None:
             "Example for a local server: tts_base_url http://localhost:11434/v1, "
             "a text-to-speech model and one of its voices per speaker."
         )
-    if len(set(s.voices[:speakers])) < speakers:
+    if len(set(chosen[:speakers])) < speakers:
         raise ConfigError("Every speaker needs a voice of their own, two share one here.")

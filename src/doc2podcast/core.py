@@ -125,7 +125,8 @@ def render(
         **settings
     )
     params = _voiced_params(resolved, from_script)
-    config.require_tts(resolved, len(params.persons))
+    # The cast that speaks decides, not the settings: its voices may come from the script.
+    config.require_tts(resolved, len(params.persons), [p.voice_id for p in params.persons])
     speech = client or make_speech_client(resolved)
     audio, seconds = render_lines(speech, resolved, lines, params, progress)
     logger.info("Podcast: done, %.0fs from %d contributions", seconds, len(lines))
