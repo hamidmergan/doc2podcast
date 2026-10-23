@@ -38,7 +38,7 @@ Markdown for review, `--from-script` voices a reviewed script.
 
 - [x] 0 Scaffold: repo, LICENSE, pyproject, package layout, CI, PLAN, README skeleton
 - [x] 1 Core: script generation, Markdown script format, voicing, joining, config, errors
-- [ ] 2 API and CLI
+- [x] 2 API and CLI
 - [ ] 3 Tests with a fake chat and speech server
 - [ ] 4 README, CHANGELOG 0.1.0, local smoke test
 - [ ] 5 English sweep and acceptance
@@ -46,4 +46,4 @@ Markdown for review, `--from-script` voices a reviewed script.
 
 ## Open
 
-- Steps 2 to 6 are open.
+- Steps 3 to 6 are open.
