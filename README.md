@@ -248,7 +248,12 @@ Order: argument, then environment variable, then default.
 | `max_chars` / `--max-chars` | `DOC2PODCAST_MAX_CHARS` | 100000 |
 | `max_sources` / `--max-sources` | `DOC2PODCAST_MAX_SOURCES` | 10 |
 | `concurrency` / `--concurrency` | `DOC2PODCAST_CONCURRENCY` | 4 |
+| `chunk_chars` / `--chunk-chars` | `DOC2PODCAST_CHUNK_CHARS` | 400 characters |
+| `context_window` / `--context-window` | `DOC2PODCAST_CONTEXT_WINDOW` | 131072 tokens |
 | `timeout` / `--timeout` | `DOC2PODCAST_TIMEOUT` | 300 seconds |
+| `max_retries` / `--max-retries` | `DOC2PODCAST_MAX_RETRIES` | 2 |
+| `stage_seconds` / `--stage-seconds` | `DOC2PODCAST_STAGE_SECONDS` | 1800 seconds |
+| `temperature` | `DOC2PODCAST_TEMPERATURE` | 0.4 |
 
 Roles are `host`, `expert`, `student` and `critic`. They shape how a person talks, not
 who speaks when. Every speaker needs a voice of their own, two people may not share one.
@@ -266,6 +271,24 @@ drops out instead of being invented.
 `--intro-note` is spoken before the first contribution and also written into the
 metadata comment of the MP3.
 
+`--context-window` is the window of your chat model in tokens. The whole material goes
+into the planning call and into every part call, so that window is the real limit. Name
+the window your model has: material that does not fit is first boiled down to the
+topics it covers, one extra call per piece, and the episode is planned and written from
+those topics, so the last documents still get their say instead of being cut off by the
+server. A window under 16384 tokens is refused.
+
+`--concurrency` is the number of contributions voiced at the same time. The parts of a
+single long contribution always go out one after the other, so the setting means one
+thing and `DOC2SPEECH_*` variables of the speech tool change nothing here.
+
+`--timeout` and `--max-retries` belong to the chat requests. Voicing has a ladder of
+four attempts of its own, with pauses of 2, 5 and 10 seconds, and it stops at the first
+error that cannot get better, a wrong key or an unknown voice for example.
+`--stage-seconds` is the whole voicing: when the speech server hangs, the run gives up
+after that many seconds instead of working through every contribution. `0` turns the
+budget off.
+
 ## Limitations
 
 Quality depends on the chosen models. A small chat model keeps the word count and the
@@ -276,6 +299,19 @@ A scanned PDF without a text layer carries no text, so it cannot become an episo
 
 The chat model writes from the material you give it. It may still get a detail wrong,
 so check facts, figures and deadlines before you publish.
+
+The whole material goes into the planning call and into every part call. A 20 minute
+episode is four part calls, a 60 minute episode is ten, so the material crosses the
+wire that many times. `--max-chars` caps what is sent at all, by default 100000
+characters, and `--context-window` decides whether that still fits your model: what
+does not fit is talked about through its topics instead of its full text, which costs
+detail. A large dossier and a small window therefore give a flatter episode. Fewer or
+shorter documents, or a model with a larger window, give a better one.
+
+What each part talks about is decided by the plan and by the prompt, not by a division
+of the material. Two parts can touch the same passage, so a long episode can repeat
+itself. A plan that gives a file far too little room is asked for a second time, but a
+subject mentioned twice is not caught.
 
 ## Running Tests
 
