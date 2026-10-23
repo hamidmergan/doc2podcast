@@ -69,3 +69,5 @@ class PodcastParams(BaseModel):
     instruction_unmatched: bool = False
     # What the instruction turned out to be, decided once per run, see instructions.py.
     instruction_way: str = ""
+    # Which settings the head of a read script really named, empty for a fresh script.
+    head_keys: List[str] = []

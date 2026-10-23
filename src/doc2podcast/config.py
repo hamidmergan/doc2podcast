@@ -158,7 +158,7 @@ def resolve(
         voices=voice_list,
         names=name_list,
         roles=role_list,
-        speakers=_pick(speakers, "SPEAKERS", None, int) or (len(voice_list) or 2),
+        speakers=_speakers(_pick(speakers, "SPEAKERS", None, int), voice_list),
         minutes=float(_pick(minutes, "MINUTES", MINUTES_DEFAULT, float)),
         language=str(_pick(language, "LANGUAGE", "en", str)).lower(),
         style=str(_pick(style, "STYLE", "teaching", str)).lower(),
@@ -177,6 +177,16 @@ def resolve(
     )
     _validate(settings)
     return settings
+
+
+def _speakers(given: Optional[int], voices: Tuple[str, ...]) -> int:
+    """How many people talk: what the caller said, else one per voice, else two.
+
+    A given 0 is kept as it is, so ``_validate`` can say what is wrong with it.
+    """
+    if given is not None:
+        return given
+    return len(voices) or 2
 
 
 def _validate(s: Settings) -> None:

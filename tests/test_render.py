@@ -286,3 +286,26 @@ def test_a_missing_ffmpeg_says_what_to_install(monkeypatch):
     with pytest.raises(AudioError) as probe:
         audio.ffprobe_path()
     assert "ffprobe was not found" in str(probe.value)
+
+
+@needs_ffmpeg
+def test_the_environment_decides_for_a_script_without_a_head(server, conf, monkeypatch):
+    """A hand written script carries no settings, so the environment keeps its say."""
+    monkeypatch.setenv("DOC2PODCAST_LANGUAGE", "de")
+    monkeypatch.setenv("DOC2PODCAST_SPEED", "1.1")
+    render("Ana: Es sind 3 Tage.\n\nBen: Genau 3 Tage.\n", **speech_conf(conf))
+    body = server.speech_requests[0]["body"]
+    assert body["speed"] == 1.1
+    # German text keeps its digits, only English spells them out.
+    assert "3" in body["input"] and "three" not in body["input"]
+
+
+@needs_ffmpeg
+def test_the_head_of_the_script_beats_the_environment(server, conf, monkeypatch):
+    monkeypatch.setenv("DOC2PODCAST_LANGUAGE", "de")
+    monkeypatch.setenv("DOC2PODCAST_SPEED", "1.1")
+    script = SCRIPT.replace("Hello and welcome to the episode.", "It is 3 days.")
+    render(script, **speech_conf(conf))
+    body = server.speech_requests[0]["body"]
+    assert body["speed"] == 0.9
+    assert "three days" in body["input"]

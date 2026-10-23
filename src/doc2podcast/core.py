@@ -115,10 +115,11 @@ def render(
 ):
     """Voice a reviewed script and return the MP3 bytes, or the path it was written to."""
     lines, from_script = markdown.from_markdown(script_md)
-    # What the script was written with stands, the caller only adds the voices.
+    # What the script really says stands, the caller only adds the voices. A head that
+    # named nothing leaves the environment its say, so DOC2PODCAST_LANGUAGE still counts.
     for key, value in (("language", from_script.language), ("style", from_script.style),
                        ("speed", from_script.speed), ("intro_note", from_script.intro_note)):
-        if settings.get(key) is None and value:
+        if key in from_script.head_keys and settings.get(key) is None and value:
             settings[key] = value
     resolved = config.resolve(
         voices=voices, tts_base_url=tts_base_url, tts_model=tts_model,

@@ -99,3 +99,15 @@ def test_two_speakers_may_not_share_a_voice():
     with pytest.raises(ConfigError) as info:
         config.require_tts(settings, 2)
     assert "voice of their own" in str(info.value)
+
+
+def test_zero_speakers_is_reported_and_not_turned_into_two(monkeypatch):
+    monkeypatch.setenv("DOC2PODCAST_SPEAKERS", "0")
+    with pytest.raises(ConfigError) as info:
+        config.resolve()
+    assert "speakers must be between 1 and 4" in str(info.value)
+
+
+def test_without_a_number_the_voices_decide_how_many_speak():
+    assert config.resolve(voices="a,b,c").speakers == 3
+    assert config.resolve().speakers == 2

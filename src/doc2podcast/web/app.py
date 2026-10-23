@@ -166,6 +166,9 @@ def create_app(settings: Optional[Settings] = None,
                 raise HTTPException(409, "A podcast is already being made.")
             job.state, job.step, job.done, job.total = "running", step, 0, total
             job.error, job.name = "", name
+            # The finished episode of the run before must not be offered while this
+            # one is still being made.
+            job.audio, job.seconds = b"", 0.0
 
     def failed(exc: Exception) -> None:
         # Every error ends the job. An error left running would block the page.

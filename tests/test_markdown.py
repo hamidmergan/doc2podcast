@@ -1,7 +1,7 @@
 import pytest
 
 from doc2podcast import markdown
-from doc2podcast.errors import ScriptUnusable
+from doc2podcast.errors import ScriptFormatError
 from doc2podcast.schemas import Line, Person, PodcastParams
 
 
@@ -50,8 +50,48 @@ def test_bold_names_are_read_in_both_shapes():
 
 
 def test_a_script_without_a_contribution_is_refused():
-    with pytest.raises(ScriptUnusable):
+    with pytest.raises(ScriptFormatError) as info:
         markdown.from_markdown("# Podcast script\n\nNothing here.\n")
+    # The file came from a person, so the error does not point at the model.
+    from doc2podcast.errors import ModelError
+
+    assert not isinstance(info.value, ModelError)
+    assert "**Ana:** Hello." in str(info.value)
+
+
+HEAD_WITHOUT_CONVERSATION = """# Podcast script
+
+## Cast
+
+- Ana (host, voice alloy)
+
+## Settings
+
+- Language: en
+- Speed: 1.1
+
+Ana: Hello there.
+"""
+
+
+def test_a_head_without_a_conversation_heading_is_no_contribution():
+    lines, back = markdown.from_markdown(HEAD_WITHOUT_CONVERSATION)
+    assert [l.text for l in lines] == ["Hello there."]
+    assert [p.name for p in back.persons] == ["Ana"]
+
+
+def test_a_contribution_carried_on_in_the_next_line_is_kept():
+    text = "**Ana:** First half,\nand the second half without a name.\n\n**Ben:** Two.\n"
+    lines, _ = markdown.from_markdown(text)
+    assert [l.text for l in lines] == [
+        "First half, and the second half without a name.", "Two."]
+
+
+def test_the_head_says_which_settings_it_carried():
+    _, back = markdown.from_markdown(HEAD_WITHOUT_CONVERSATION)
+    assert set(back.head_keys) == {"language", "speed"}
+    _, bare = markdown.from_markdown("Ana: One.\n\nBen: Two.\n")
+    assert bare.head_keys == []
 
 
 def test_the_transcript_puts_the_name_in_front():

@@ -14,7 +14,7 @@ PAUSES = (0.12, 0.25, 0.45)
 # Speech requests at the same time.
 TTS_PARALLELISM = 4
 # Longest instruction the caller may add.
-INSTRUCTION_MAX_CHARS = 2000
+INSTRUCTION_MAX_CHARS = 500
 # Characters per speech request. Many servers give up on a request that asks for more
 # than about a minute of audio, so a long contribution goes out in short parts.
 CHUNK_CHARS = 400

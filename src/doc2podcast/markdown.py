@@ -7,7 +7,7 @@ needs: who speaks, in which language, at which tempo and with which voice.
 import re
 from typing import List, Optional, Tuple
 
-from .errors import ScriptUnusable
+from .errors import ScriptFormatError
 from .limits import MAX_LINE_CHARS, MAX_LINES
 from .schemas import Line, Person, PodcastParams
 
@@ -72,9 +72,11 @@ def from_markdown(text: str) -> Tuple[List[Line], PodcastParams]:
     for raw in body:
         found = _LINE.match(raw)
         if not found:
+            _continue_last(lines, raw)
             continue
         name, said = found.group(1).strip(), found.group(2).strip()
-        if not name or not said or name.lower() in _HEAD_KEYS:
+        # A head without a "Conversation" heading is read here too, its keys are no cast.
+        if not name or not said or _key(name) in _HEAD_KEYS:
             continue
         if name not in names:
             names.append(name)
@@ -83,10 +85,24 @@ def from_markdown(text: str) -> Tuple[List[Line], PodcastParams]:
         if len(lines) >= MAX_LINES:
             break
     if not lines:
-        raise ScriptUnusable(
+        raise ScriptFormatError(
             "No contribution found in the script. A line looks like '**Ana:** Hello.'"
         )
     return lines, params
+
+
+def _key(name: str) -> str:
+    """A head key as it is written in the head, with the list dash taken off."""
+    return name.lstrip("-*\u2022").strip().lower()
+
+
+def _continue_last(lines: List[Line], raw: str) -> None:
+    """A contribution carried on over a second line belongs to the one before it."""
+    text = raw.strip()
+    if not lines or not text or text[0] in "#-*>|":
+        return
+    joined = ("%s %s" % (lines[-1].text, text))[:MAX_LINE_CHARS]
+    lines[-1] = lines[-1].model_copy(update={"text": joined})
 
 
 def _role_for(index: int) -> str:
@@ -136,6 +152,8 @@ def _params(head: List[str]) -> PodcastParams:
         intro_note=values.get("intro note", ""),
         source_label=values.get("material", ""),
         persons=persons,
+        # Only what the head really said, so an empty head leaves the environment alone.
+        head_keys=[key.replace(" ", "_") for key in values],
     )
 
 

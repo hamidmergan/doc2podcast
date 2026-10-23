@@ -1,0 +1,11 @@
+# Nothing hidden and nothing local belongs in the build context.
+.*/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+private/
+.env

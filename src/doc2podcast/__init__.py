@@ -6,6 +6,7 @@ from .errors import (
     LimitError,
     ModelError,
     PodcastError,
+    ScriptFormatError,
     ScriptUnusable,
     UnsupportedFileError,
 )
@@ -26,6 +27,7 @@ __all__ = [
     "EmptyTextError",
     "UnsupportedFileError",
     "ModelError",
+    "ScriptFormatError",
     "ScriptUnusable",
     "AudioError",
     "__version__",
