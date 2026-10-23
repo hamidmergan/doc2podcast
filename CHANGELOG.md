@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Voicing of every contribution through an OpenAI-compatible speech model, with the
   pieces levelled and joined by ffmpeg, and a gap between them that fits the moment.
 - Own settings for the speech side, with a fallback to the chat values.
+- `--context-window` keeps the material inside the window of the chat model. Material
+  that does not fit is talked about through its topics instead of being cut off by the
+  server, so the last documents still get their say.
+- A plan that gives a whole file far too little room is asked for a second time.
+- `--max-retries`, `--chunk-chars` and `--stage-seconds` for the chat retries, the
+  length of one speech request and the time the whole voicing may take. Voicing stops
+  at the first error that cannot get better, such as a wrong key or an unknown voice.
 - `--instructions` for a wish about subject or tone, and `--intro-note` for a spoken
   note that also lands in the metadata of the file.
 - Web page under `doc2podcast serve` with the five steps Content, Cast, Script,
