@@ -4,7 +4,7 @@ from pathlib import Path
 
 import doc2podcast
 from doc2podcast import client, instructions
-from doc2podcast.config import Settings
+from doc2podcast.config import resolve
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -39,15 +39,15 @@ def test_the_timeout_keeps_its_values():
 
 
 def test_a_speech_client_uses_the_speech_side():
-    settings = Settings(
+    settings = resolve(
         base_url="http://chat/v1", model="m", api_key="k",
         tts_base_url="http://voice/v1", tts_model="t", tts_api_key="v",
-        voices=("a",), names=(), roles=(), speakers=1, minutes=5.0, language="en",
-        style="teaching", speed=0.9, instructions="", intro_note="", max_chars=100,
-        max_sources=1, concurrency=1, timeout=10.0, max_retries=0, temperature=0.4,
+        voices="a", speakers=1, max_retries=2,
     )
     made = client.make_speech_client(settings)
     assert str(made.base_url).rstrip("/") == "http://voice/v1"
+    # Voicing has one retry ladder of its own, a second one here would multiply it.
+    assert made.max_retries == 0
 
 
 def test_an_instruction_is_cleaned_to_one_line():

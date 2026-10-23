@@ -31,11 +31,21 @@ _PEAK_DB = -1.0
 
 def ffmpeg_path() -> str:
     """Where ffmpeg is, or a clear error naming what to install."""
-    found = shutil.which("ffmpeg")
+    return _tool("ffmpeg", "It joins the voiced contributions into one file.")
+
+
+def ffprobe_path() -> str:
+    """Where ffprobe is, or a clear error naming what to install."""
+    return _tool("ffprobe", "It measures how long a voiced piece is.")
+
+
+def _tool(name: str, what: str) -> str:
+    found = shutil.which(name)
     if not found:
         raise AudioError(
-            "ffmpeg was not found. It joins the voiced contributions into one file. "
+            "%s was not found. %s "
             "Install it, for example with 'brew install ffmpeg' or 'apt install ffmpeg'."
+            % (name, what)
         )
     return found
 
@@ -53,7 +63,7 @@ def pause_before(before_s: float, after_s: float) -> float:
 def audio_duration(path: Path) -> float:
     """Audio length in seconds from the counted packets."""
     result = subprocess.run(
-        ["ffprobe", "-v", "error", "-select_streams", "a:0",
+        [ffprobe_path(), "-v", "error", "-select_streams", "a:0",
          "-show_entries", "packet=duration_time", "-of", "csv=p=0", str(path)],
         capture_output=True, text=True, timeout=60,
     )

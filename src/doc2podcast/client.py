@@ -46,14 +46,18 @@ def make_client(settings: Settings):
 
 
 def make_speech_client(settings: Settings):
-    """The speech side runs on its own server unless it names none."""
+    """The speech side runs on its own server unless it names none.
+
+    It brings no retries of its own: voicing has one ladder, in ``voicing.py``, and a
+    second one underneath would multiply the wait against a dead provider.
+    """
     from openai import OpenAI
 
     return OpenAI(
         base_url=settings.tts_base_url,
         api_key=settings.tts_api_key,
         timeout=_timeout(settings.timeout),
-        max_retries=settings.max_retries,
+        max_retries=0,
     )
 
 

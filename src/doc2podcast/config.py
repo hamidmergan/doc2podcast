@@ -1,7 +1,8 @@
 """Default values and resolution of settings.
 
 Order: argument, then environment variable, then default. The speech side has its own
-variables and falls back to the chat values where it has none of its own.
+variables and falls back to the chat values where it has none of its own, except the
+model: a chat model would answer a podcast with text instead of audio.
 """
 
 import os
@@ -9,7 +10,14 @@ from dataclasses import dataclass
 from typing import List, Optional, Sequence, Tuple
 
 from .errors import ConfigError
-from .limits import MAX_CHARS, MAX_SOURCES, TTS_PARALLELISM
+from .limits import (
+    CHUNK_CHARS,
+    DEFAULT_WINDOW_TOKENS,
+    MAX_CHARS,
+    MAX_SOURCES,
+    TTS_PARALLELISM,
+    VOICING_SECONDS,
+)
 from .schemas import (
     LANGUAGES,
     MINUTES_DEFAULT,
@@ -58,7 +66,10 @@ class Settings:
     intro_note: str
     max_chars: int
     max_sources: int
+    context_window: int
+    chunk_chars: int
     concurrency: int
+    stage_seconds: float
     timeout: float
     max_retries: int
     temperature: float
@@ -116,7 +127,10 @@ def resolve(
     intro_note: Optional[str] = None,
     max_chars: Optional[int] = None,
     max_sources: Optional[int] = None,
+    context_window: Optional[int] = None,
+    chunk_chars: Optional[int] = None,
     concurrency: Optional[int] = None,
+    stage_seconds: Optional[float] = None,
     timeout: Optional[float] = None,
     max_retries: Optional[int] = None,
     temperature: Optional[float] = None,
@@ -153,7 +167,10 @@ def resolve(
         intro_note=_pick(intro_note, "INTRO_NOTE", "", str),
         max_chars=_pick(max_chars, "MAX_CHARS", MAX_CHARS, int),
         max_sources=_pick(max_sources, "MAX_SOURCES", MAX_SOURCES, int),
+        context_window=_pick(context_window, "CONTEXT_WINDOW", DEFAULT_WINDOW_TOKENS, int),
+        chunk_chars=_pick(chunk_chars, "CHUNK_CHARS", CHUNK_CHARS, int),
         concurrency=_pick(concurrency, "CONCURRENCY", TTS_PARALLELISM, int),
+        stage_seconds=float(_pick(stage_seconds, "STAGE_SECONDS", VOICING_SECONDS, float)),
         timeout=_pick(timeout, "TIMEOUT", TIMEOUT_SECONDS, float),
         max_retries=_pick(max_retries, "MAX_RETRIES", MAX_RETRIES, int),
         temperature=_pick(temperature, "TEMPERATURE", TEMPERATURE, float),
@@ -180,6 +197,8 @@ def _validate(s: Settings) -> None:
     positive = {
         "max_chars": s.max_chars,
         "max_sources": s.max_sources,
+        "context_window": s.context_window,
+        "chunk_chars": s.chunk_chars,
         "concurrency": s.concurrency,
         "timeout": s.timeout,
     }
@@ -188,6 +207,8 @@ def _validate(s: Settings) -> None:
             raise ConfigError(f"{name} must be greater than 0, but is {value}.")
     if s.max_retries < 0:
         raise ConfigError("max_retries must not be negative.")
+    if s.stage_seconds < 0:
+        raise ConfigError("stage_seconds must not be negative.")
 
 
 def require_chat(s: Settings) -> None:

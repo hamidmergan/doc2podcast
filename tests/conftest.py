@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import tempfile
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
@@ -59,8 +60,11 @@ class FakeServer:
     def __init__(self):
         self.requests = []
         self.fail = False
+        self.fail_status = 500
         self.refuse_json_mode = False
         self.speech_failures = 0
+        self.speech_status = 500
+        self.speech_delay = 0.0
         self.persons = 2
         self.lock = threading.Lock()
         outer = self
@@ -79,7 +83,7 @@ class FakeServer:
                         "body": body,
                     })
                 if outer.fail:
-                    return self.refuse(500, "broken")
+                    return self.refuse(outer.fail_status, "broken")
                 if self.path.endswith("/audio/speech"):
                     return self.speech(body)
                 if self.path.endswith("/chat/completions"):
@@ -90,7 +94,9 @@ class FakeServer:
                 with outer.lock:
                     if outer.speech_failures > 0:
                         outer.speech_failures -= 1
-                        return self.refuse(500, "voice busy")
+                        return self.refuse(outer.speech_status, "voice busy")
+                if outer.speech_delay:
+                    time.sleep(outer.speech_delay)
                 self.binary(MP3)
 
             def chat(self, body):

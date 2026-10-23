@@ -3,8 +3,6 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
-from doc2speech import SpeechError
-
 from . import __version__
 from .config import resolve
 from .core import make_podcast, render, write_script
@@ -65,7 +63,19 @@ def _parser() -> argparse.ArgumentParser:
                    help="Longest accepted material in characters (default 100000)")
     p.add_argument("--max-sources", type=int, help="Most files in one episode (default 10)")
     p.add_argument("--concurrency", type=int, help="Speech requests at the same time (default 4)")
+    p.add_argument("--chunk-chars", type=int,
+                   help="Characters per speech request, longer contributions go out "
+                        "in parts (default 400)")
     p.add_argument("--timeout", type=float, help="Seconds per request (default 300)")
+    p.add_argument("--max-retries", type=int,
+                   help="Retries of one chat request (default 2). Voicing has its own "
+                        "ladder of four attempts")
+    p.add_argument("--stage-seconds", type=float,
+                   help="Seconds the voicing may take before it gives up, 0 turns the "
+                        "budget off (default 1800)")
+    p.add_argument("--context-window", type=int,
+                   help="Context window of the chat model in tokens. Material that does "
+                        "not fit is talked about through its topics (default 131072)")
     p.add_argument("--quiet", action="store_true", help="No progress on stderr")
     p.add_argument("--version", action="version", version="doc2podcast %s" % __version__)
     return p
@@ -182,8 +192,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         intro_note=args.intro_note,
         max_chars=args.max_chars,
         max_sources=args.max_sources,
+        chunk_chars=args.chunk_chars,
         concurrency=args.concurrency,
         timeout=args.timeout,
+        max_retries=args.max_retries,
+        stage_seconds=args.stage_seconds,
+        context_window=args.context_window,
     )
     to_stdout = args.output == "-"
 
@@ -207,7 +221,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     except ConfigError as exc:
         print("Error: %s" % exc, file=sys.stderr)
         return 2
-    except (PodcastError, SpeechError) as exc:
+    except PodcastError as exc:
         print("Error: %s" % exc, file=sys.stderr)
         return 1
     except OSError as exc:
@@ -228,7 +242,8 @@ def main(argv: Optional[List[str]] = None) -> int:
 def _speech_only(options: dict) -> dict:
     """What voicing a finished script needs, the chat side has nothing left to do."""
     out = dict(options)
-    for key in ("minutes", "names", "roles", "max_chars", "max_sources", "instructions"):
+    for key in ("minutes", "names", "roles", "max_sources", "instructions",
+                "context_window"):
         out.pop(key, None)
     return out
 

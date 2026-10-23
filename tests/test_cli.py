@@ -1,3 +1,6 @@
+import subprocess
+import sys
+
 import pytest
 
 from conftest import needs_ffmpeg
@@ -92,6 +95,43 @@ def test_the_round_trip_keeps_the_voices_of_the_script(server, conf, material, t
     assert episode.stat().st_size > 0
     voices = [r["body"]["voice"] for r in server.speech_requests]
     assert set(voices) == {"alloy", "echo"} and voices[0] == "alloy"
+
+
+def test_a_refused_speech_key_ends_with_code_one(server, conf, tmp_path, capsys):
+    script = tmp_path / "s.md"
+    script.write_text("Ana: Hello there.\n\nBen: Good to be here.\n", encoding="utf-8")
+    server.fail, server.fail_status = True, 401
+    assert main(["--from-script", str(script), "-o", str(tmp_path / "s.mp3")]
+                + flags(conf)) == 1
+    error = capsys.readouterr().err
+    assert "Error:" in error and "401" in error
+    assert len(server.speech_requests) == 1
+
+
+# The speech library is a dependency, but reading the help must not need it.
+WITHOUT_SPEECH = """
+import sys
+
+
+class Block:
+    def find_spec(self, name, path=None, target=None):
+        if name.split(".")[0] == "doc2speech":
+            raise ImportError("doc2speech is not installed")
+        return None
+
+
+sys.meta_path.insert(0, Block())
+from doc2podcast.cli import main
+
+main(["--help"])
+"""
+
+
+def test_the_help_works_without_the_speech_library():
+    done = subprocess.run([sys.executable, "-c", WITHOUT_SPEECH],
+                          capture_output=True, text=True)
+    assert done.returncode == 0, done.stderr
+    assert "Turn documents into a podcast conversation" in done.stdout
 
 
 def test_a_missing_setting_ends_with_code_two(material, capsys):
